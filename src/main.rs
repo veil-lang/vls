@@ -5,7 +5,7 @@ use ve::typeck::TypeChecker;
 use ve::lexer::Lexer;
 use codespan::Files;
 use std::collections::HashMap;
-
+use url::Url;
 fn main() {
     let stdin = io::stdin();
     let mut stdout = io::stdout();
@@ -70,8 +70,13 @@ fn main() {
                         .and_then(|v| v.as_str())
                         .unwrap_or("file:///main.veil");
 
+                    let filename = Url::parse(uri).ok()
+                        .and_then(|u| u.to_file_path().ok())
+                        .and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_string()))
+                        .unwrap_or("main.veil".to_string());
+
                     let mut files = Files::new();
-                    let file_id = files.add("main.veil", text.to_string());
+                    let file_id = files.add(filename, text.to_string());
 
                     let lexer = Lexer::new(&files, file_id);
                     let mut parser = Parser::new(lexer);
